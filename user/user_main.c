@@ -4,24 +4,34 @@
 #include "os_type.h"
 #include "user_config.h"
 #include "user_interface.h"
+#include "net_sender.h"
 
 #define user_procTaskPrio        0
 #define user_procTaskQueueLen    1
-os_event_t    user_procTaskQueue[user_procTaskQueueLen];
-static void loop(os_event_t *events);
 
-//Main code function
-static void ICACHE_FLASH_ATTR
-loop(os_event_t *events)
+os_event_t user_procTaskQueue[user_procTaskQueueLen];
+
+static void user_procTask(os_event_t *events);
+
+static void ICACHE_FLASH_ATTR user_procTask(os_event_t *events)
 {
-    os_printf("Hello\n\r");
-    os_delay_us(1000000);
-    system_os_post(user_procTaskPrio, 0, 0 );
 }
 
-//Init function 
-void ICACHE_FLASH_ATTR
-user_init()
+// Timer function
+static volatile os_timer_t timer;
+static int i = 0;
+
+static void ICACHE_FLASH_ATTR timer_callback(void *arg)
+{
+    os_printf(".");
+    if (i++ == 3) {
+      i = 0;
+      os_printf("\r\n");
+      net_sender_init();
+    }
+}
+
+void ICACHE_FLASH_ATTR user_init()
 {
     char ssid[32] = SSID;
     char password[64] = SSID_PASSWORD;
@@ -38,7 +48,10 @@ user_init()
     // Initialize UART0
     uart_div_modify(0, UART_CLK_FREQ / 115200);
 
-    //Start os task
-    system_os_task(loop, user_procTaskPrio,user_procTaskQueue, user_procTaskQueueLen);
-    system_os_post(user_procTaskPrio, 0, 0 );
+    os_timer_disarm(&timer);
+    os_timer_setfn(&timer, (os_timer_func_t *)timer_callback, NULL);
+    os_timer_arm(&timer, 1000, 1);
+
+    os_printf("\r\n** Started **\r\n");
+    system_os_task(user_procTask, user_procTaskPrio, user_procTaskQueue, user_procTaskQueueLen);
 }
