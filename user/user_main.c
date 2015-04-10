@@ -5,6 +5,7 @@
 #include "user_config.h"
 #include "user_interface.h"
 #include "net_sender.h"
+#include "dht22.h"
 
 #define user_procTaskPrio        0
 #define user_procTaskQueueLen    1
@@ -23,12 +24,8 @@ static int i = 0;
 
 static void ICACHE_FLASH_ATTR timer_callback(void *arg)
 {
-    os_printf(".");
-    if (i++ == 3) {
-      i = 0;
-      os_printf("\r\n");
-      net_sender_init();
-    }
+    dht22_read();
+    os_printf("\r\n");
 }
 
 void ICACHE_FLASH_ATTR user_init()
@@ -40,7 +37,7 @@ void ICACHE_FLASH_ATTR user_init()
     //Set station mode
     wifi_set_opmode( 0x1 );
 
-    //Set ap settings
+    ////Set ap settings
     os_memcpy(&stationConf.ssid, ssid, 32);
     os_memcpy(&stationConf.password, password, 64);
     wifi_station_set_config(&stationConf);
@@ -48,9 +45,11 @@ void ICACHE_FLASH_ATTR user_init()
     // Initialize UART0
     uart_div_modify(0, UART_CLK_FREQ / 115200);
 
+    dht22_init();
+
     os_timer_disarm(&timer);
     os_timer_setfn(&timer, (os_timer_func_t *)timer_callback, NULL);
-    os_timer_arm(&timer, 1000, 1);
+    os_timer_arm(&timer, 5000, 1);
 
     os_printf("\r\n** Started **\r\n");
     system_os_task(user_procTask, user_procTaskPrio, user_procTaskQueue, user_procTaskQueueLen);
