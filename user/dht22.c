@@ -1,6 +1,6 @@
-#include "ets_sys.h"
-#include "osapi.h"
-#include "gpio.h"
+#include <osapi.h>
+#include <user_interface.h>
+#include <gpio.h>
 #include "dht22.h"
 
 #define DHT_PIN 4
