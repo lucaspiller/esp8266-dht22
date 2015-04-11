@@ -7,7 +7,7 @@
 //    uint16_t humidity;
 //} dht22_t;
 
-extern bool dht22_init();
-extern bool dht22_read();
+extern int dht22_init();
+extern int dht22_read();
 
 #endif

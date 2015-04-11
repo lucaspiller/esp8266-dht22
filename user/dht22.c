@@ -5,10 +5,10 @@
 
 #define DHT_PIN 4
 #define MAXTIMINGS 100
-#define DHT_MAXCOUNT 32000
+#define DHT_MAXCOUNT 1000
 #define BREAKTIME 20
 
-bool ICACHE_FLASH_ATTR dht22_read() {
+int ICACHE_FLASH_ATTR dht22_read() {
   int counter = 0;
   int laststate = 1;
   int i = 0;
@@ -35,6 +35,7 @@ bool ICACHE_FLASH_ATTR dht22_read() {
 
   // wait for pin to drop?
   while (GPIO_INPUT_GET(DHT_PIN) == 1 && i < DHT_MAXCOUNT) {
+    os_delay_us(1);
     if (i >= DHT_MAXCOUNT) {
       goto fail;
     }
@@ -48,7 +49,7 @@ bool ICACHE_FLASH_ATTR dht22_read() {
     while (GPIO_INPUT_GET(DHT_PIN) == laststate) {
       counter++;
       os_delay_us(1);
-      if (counter == 10000)
+      if (counter == DHT_MAXCOUNT)
         break;
     }
     laststate = GPIO_INPUT_GET(DHT_PIN);
@@ -91,17 +92,17 @@ bool ICACHE_FLASH_ATTR dht22_read() {
 
   os_printf("Temperature: %d C, Humidity: %d %%\r\n", temperature, humidity);
 
-  return true;
+  return 0;
 fail:
   //Re-enable interrupts, end of critical section
   os_intr_unlock();
 
   os_printf("Failed to get reading, dying\r\n");
-  return false;
+  return -1;
 }
 
-bool ICACHE_FLASH_ATTR dht22_init()
+int ICACHE_FLASH_ATTR dht22_init()
 {
     PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO4_U, FUNC_GPIO4);
-    return true;
+    return 0;
 }
