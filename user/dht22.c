@@ -8,7 +8,7 @@
 #define DHT_MAXCOUNT 1000
 #define BREAKTIME 20
 
-int ICACHE_FLASH_ATTR dht22_read() {
+int ICACHE_FLASH_ATTR dht22_read(dht22_t *reading) {
   int counter = 0;
   int laststate = 1;
   int i = 0;
@@ -83,14 +83,11 @@ int ICACHE_FLASH_ATTR dht22_read() {
     goto fail;
   }
 
-  sint16 temperature;
-  uint16 humidity;
+  reading->humidity = data[0] * 256 + data[1];
+  reading->temperature = (data[2] & 0x7f) * 256 + data[3];
+  if(data[2] & 0x80) reading->temperature = -reading->temperature;
 
-  humidity = data[0] * 256 + data[1];
-  temperature = (data[2] & 0x7f) * 256 + data[3];
-  if(data[2] & 0x80) temperature = -temperature;
-
-  os_printf("Temperature: %d C, Humidity: %d %%\r\n", temperature, humidity);
+  os_printf("Temperature: %d C, Humidity: %d %%\r\n", reading->temperature, reading->humidity);
 
   return 0;
 fail:
