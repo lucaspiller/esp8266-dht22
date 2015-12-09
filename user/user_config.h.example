@@ -1,0 +1,5 @@
+#define SSID "wifinetwork"
+#define SSID_PASSWORD "wifipassword"
+
+#define TARGET_IP "192.168.1.61"
+#define TARGET_PORT 9200
