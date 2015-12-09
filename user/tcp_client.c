@@ -11,6 +11,7 @@ struct pconn {
     char databuf[512];
     int datalen;
     /*volatile*/ os_timer_t conn_checker;
+    void(*callback)(int);
 };
 
 static void ICACHE_FLASH_ATTR conn_checker_handler(void *arg)
@@ -30,6 +31,9 @@ static void ICACHE_FLASH_ATTR disconnected(void *arg)
     os_printf("Sent ok\n");
     struct pconn *p = arg;
     os_timer_arm(&p->conn_checker, 50, 0);
+    if (p->callback) {
+        p->callback(TCP_CLIENT_SENT);
+    }
 }
 
 static void ICACHE_FLASH_ATTR reconnect(void *arg, sint8 err)
@@ -37,6 +41,9 @@ static void ICACHE_FLASH_ATTR reconnect(void *arg, sint8 err)
     os_printf("Error sending %d\n", err);
     struct pconn *p = arg;
     espconn_disconnect(&p->esp_conn);
+    if (p->callback) {
+        p->callback(TCP_CLIENT_ERROR);
+    }
 }
 
 static void ICACHE_FLASH_ATTR datasent(void *arg)
@@ -47,7 +54,7 @@ static void ICACHE_FLASH_ATTR datasent(void *arg)
     espconn_disconnect(&p->esp_conn);
 }
 
-int ICACHE_FLASH_ATTR tcp_client_send(char* target, int port, char* data)
+int ICACHE_FLASH_ATTR tcp_client_send(char* target, int port, char* data, void(*callback)(int))
 {
     struct pconn *p = (struct pconn*) os_zalloc(sizeof(struct pconn));
     if (!p) {
@@ -68,7 +75,8 @@ int ICACHE_FLASH_ATTR tcp_client_send(char* target, int port, char* data)
         return -1;
     }
     strcat(p->databuf, data);
-    p->datalen = strlen(p->databuf);
+    p->datalen  = strlen(p->databuf);
+    p->callback = callback;
 
     uint32_t target_addr = ipaddr_addr(target);
     os_memcpy(p->esp_conn.proto.tcp->remote_ip, &target_addr, 4);
