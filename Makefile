@@ -1,24 +1,30 @@
-# tnx to mamalala
-# Changelog
-# Changed the variables to include the header file directory
-# Added global var for the XTENSA tool root
+# Makefile for ESP8266 projects
 #
-# This make file still needs some work.
+# Thanks to:
+# - zarya
+# - Jeroen Domburg (Sprite_tm)
+# - Christian Klippel (mamalala)
+# - Tommie Gannert (tommie)
 #
-#
+# Changelog:
+# - 2014-10-06: Changed the variables to include the header file directory
+# - 2014-10-06: Added global var for the Xtensa tool root
+# - 2014-11-23: Updated for SDK 0.9.3
+# - 2014-12-25: Replaced esptool by esptool.py
+
 # Output directors to store intermediate compiled files
 # relative to the project directory
 BUILD_BASE	= build
 FW_BASE		= firmware
 
-# Base directory for the compiler
-XTENSA_TOOLS_ROOT ?= /home/luca/esp-open-sdk/xtensa-lx106-elf/bin/
+# base directory for the compiler
+XTENSA_TOOLS_ROOT ?= /opt/Espressif/crosstool-NG/builds/xtensa-lx106-elf/bin
 
 # base directory of the ESP8266 SDK package, absolute
-SDK_BASE	?= /home/luca/esp-open-sdk/sdk
+SDK_BASE	?= /opt/Espressif/ESP8266_SDK
 
-#Esptool.py path and port
-ESPTOOL		?= /home/luca/esp-open-sdk/esptool/esptool.py
+# esptool.py path and port
+ESPTOOL		?= esptool
 ESPPORT		?= /dev/ttyUSB0
 
 # name for the target project
@@ -54,8 +60,6 @@ FW_FILE_2_ADDR	= 0x40000
 CC		:= $(XTENSA_TOOLS_ROOT)/xtensa-lx106-elf-gcc
 AR		:= $(XTENSA_TOOLS_ROOT)/xtensa-lx106-elf-ar
 LD		:= $(XTENSA_TOOLS_ROOT)/xtensa-lx106-elf-gcc
-
-
 
 ####
 #### no user configurable options below here
@@ -100,11 +104,11 @@ endef
 
 .PHONY: all checkdirs flash clean
 
-all: checkdirs $(TARGET_OUT) $(FW_FILE_1) $(FW_FILE_2)
+all: clean checkdirs $(TARGET_OUT) $(FW_FILE_1) $(FW_FILE_2)
 
 $(FW_BASE)/%.bin: $(TARGET_OUT) | $(FW_BASE)
 	$(vecho) "FW $(FW_BASE)/"
-	$(Q) $(ESPTOOL) elf2image -o $(FW_BASE)/ $(TARGET_OUT)
+	$(Q) $(ESPTOOL) -bz 4M -bm dio -eo $(TARGET_OUT) -bo $(FW_FILE_1) -bs .text -bs .data -bs .rodata -bc -ec -eo $(TARGET_OUT) -es .irom0.text $(FW_FILE_2) -ec
 
 $(TARGET_OUT): $(APP_AR)
 	$(vecho) "LD $@"
@@ -123,7 +127,7 @@ $(FW_BASE):
 	$(Q) mkdir -p $@
 
 flash: $(FW_FILE_1) $(FW_FILE_2)
-	$(ESPTOOL) --port $(ESPPORT) write_flash $(FW_FILE_1_ADDR) $(FW_FILE_1) $(FW_FILE_2_ADDR) $(FW_FILE_2)
+	$(ESPTOOL) -cp $(ESPPORT) -cd ck -ca $(FW_FILE_1_ADDR) -cf $(FW_FILE_1) -ca $(FW_FILE_2_ADDR) -cf $(FW_FILE_2)
 
 clean:
 	$(Q) rm -rf $(FW_BASE) $(BUILD_BASE)
