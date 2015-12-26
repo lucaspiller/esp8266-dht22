@@ -30,10 +30,10 @@ static void ICACHE_FLASH_ATTR disconnected(void *arg)
 {
     os_printf("Sent ok\n");
     struct pconn *p = arg;
-    os_timer_arm(&p->conn_checker, 50, 0);
     if (p->callback) {
         p->callback(TCP_CLIENT_SENT);
     }
+    os_timer_arm(&p->conn_checker, 50, 0);
 }
 
 static void ICACHE_FLASH_ATTR reconnect(void *arg, sint8 err)
