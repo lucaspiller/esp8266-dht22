@@ -19,11 +19,14 @@ static volatile int failures;
 
 static void ICACHE_FLASH_ATTR construct_packet(char *buff)
 {
+    uint16 vcc = system_get_vdd33();
+
     // Fields:
     // 1) packet type
     // 2) temperature
     // 3) humidity
-    os_sprintf(buff, "1,%d,%d\r\n", reading->temperature, reading->humidity);
+    // 4) internal voltage
+    os_sprintf(buff, "1,%d,%d,%d\r\n", reading->temperature, reading->humidity, vcc);
 }
 
 static int ICACHE_FLASH_ATTR check_wifi()
@@ -44,7 +47,7 @@ void ICACHE_FLASH_ATTR send_callback(int state)
 static void ICACHE_FLASH_ATTR timer_callback(void *arg)
 {
     int result;
-    char buff[16];
+    char buff[17];
 
     os_timer_disarm(&timer);
 
@@ -132,5 +135,5 @@ void ICACHE_FLASH_ATTR sensor_logger_init() {
 
     os_timer_disarm(&timer);
     os_timer_setfn(&timer, (os_timer_func_t *)timer_callback, NULL);
-    os_timer_arm(&timer, 7500, 1);
+    os_timer_arm(&timer, 500, 1);
 }

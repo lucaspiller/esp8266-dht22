@@ -10,7 +10,7 @@ void ICACHE_FLASH_ATTR user_init()
     struct station_config stationConf;
 
     // Set station mode
-    wifi_set_opmode( 0x1 );
+    wifi_set_opmode(STATION_MODE);
 
     // Set ap settings
     os_memcpy(&stationConf.ssid, ssid, 32);
@@ -19,6 +19,7 @@ void ICACHE_FLASH_ATTR user_init()
 
     // Initialize UART0
     uart_div_modify(0, UART_CLK_FREQ / 115200);
+    system_set_os_print(1);
 
     sensor_logger_init();
 
