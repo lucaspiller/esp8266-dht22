@@ -29,6 +29,12 @@ static void ICACHE_FLASH_ATTR construct_packet(char *buff)
     os_sprintf(buff, "1,%d,%d,%d\r\n", reading->temperature, reading->humidity, vcc);
 }
 
+static void ICACHE_FLASH_ATTR sleep()
+{
+    os_printf("Entering deep sleep for 300s\r\n");
+    system_deep_sleep(300 * 1000 * 1000);
+}
+
 static int ICACHE_FLASH_ATTR check_wifi()
 {
     if (wifi_station_get_connect_status() != STATION_GOT_IP)
@@ -52,8 +58,8 @@ static void ICACHE_FLASH_ATTR timer_callback(void *arg)
     os_timer_disarm(&timer);
 
     if (failures > 30) {
-        os_printf("Too many failures - rebooting!\r\n");
-        system_restart();
+        os_printf("Too many failures - aborting\r\n");
+        sleep();
     }
 
     // 1. take reading
@@ -116,10 +122,7 @@ static void ICACHE_FLASH_ATTR timer_callback(void *arg)
     state = STATE_READING;
     failures = 0;
 
-    os_printf("Entering deep sleep for 300s\r\n");
-    system_deep_sleep(300 * 1000 * 1000);
-    //os_timer_arm(&timer, 10000, 1);
-    //os_printf("Sleeping for 10s\r\n");
+    sleep();
 }
 
 void ICACHE_FLASH_ATTR sensor_logger_init() {
